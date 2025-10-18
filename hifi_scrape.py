@@ -14,16 +14,16 @@ def send(text):
 def scrape():
     with sync_playwright() as p:
         browser = p.chromium.launch(
-            headless=False,           # real browser
-            args=['--disable-blink-features=AutomationControlled']
+            headless=True,
+            args=['--disable-blink-features=AutomationControlled',
+                  '--no-sandbox',
+                  '--disable-dev-shm-usage']
         )
         page = browser.new_page(
             viewport={'width': 1920, 'height': 1080},
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
         )
         page.goto(URL, wait_until='networkidle')
-
-        # wait for canvas + brute-force JS globals
         page.wait_for_selector('canvas', timeout=20_000)
         for _ in range(40):
             data = page.evaluate('''() => {
@@ -36,7 +36,6 @@ def scrape():
             }''')
             if data: break
             page.wait_for_timeout(1000)
-
         browser.close()
     return pd.DataFrame(data) if data else pd.DataFrame()
 
