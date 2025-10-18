@@ -26,21 +26,27 @@ def scrape():
 def main():
     df = scrape()
     if df.empty:
-        print('no data')
+        send("⚠️ HIFI scrape returned empty")
         return
+
     price   = df['price'].iloc[-1]
     top_long  = df.loc[df['longUsd'].idxmax()]
     top_short = df.loc[df['shortUsd'].idxmax()]
     dist_l  = (top_long['price']  - price) / price
     dist_s  = (price - top_short['price']) / price
 
-    alerts = []
-    if dist_l < 0.0025:
-        alerts.append(f"🟢 *HIFI LONG*\\nEntry `{top_long['price']:.5f}`\\nStop `{price*0.99:.5f}`\\nTP `{price*1.016:.5f}`\\nDist {dist_l*100:.2f}%")
-    if dist_s < 0.0025:
-        alerts.append(f"🔴 *HIFI SHORT*\\nEntry `{top_short['price']:.5f}`\\nStop `{price*1.01:.5f}`\\nTP `{price*0.984:.5f}`\\nDist {dist_s*100:.2f}%")
+    # heartbeat + live values
+    summary = (f"📊 HIFI scan {dt.datetime.utcnow():%H:%M} UTC\n"
+               f"Price: `{price:.5f}`\n"
+               f"Long wall: `{top_long['price']:.5f}`  (dist `{dist_l*100:.2f}%`)\n"
+               f"Short wall: `{top_short['price']:.5f}`  (dist `{dist_s*100:.2f}%`)")
+    send(summary)
 
-    for msg in alerts: send(msg)
+    # signals only if close
+    if dist_l < 0.0025:
+        send(f"🟢 LONG Entry `{top_long['price']:.5f}`  Stop `{price*0.99:.5f}`  TP `{price*1.016:.5f}`")
+    if dist_s < 0.0025:
+        send(f"🔴 SHORT Entry `{top_short['price']:.5f}`  Stop `{price*1.01:.5f}`  TP `{price*0.984:.5f}`")
 
 if __name__ == '__main__':
     main()
