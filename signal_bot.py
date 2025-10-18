@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-import os, requests, pandas as pd, datetime as dt, json
+import os, requests, pandas as pd, datetime as dt
 
 TOKEN   = '8486551379:AAGCvTrIHqkfMVuFc6DTkCcJyfPbt1LQkAA'
 CHAT    = '7143200137'
 TG_URL  = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
-API     = 'https://www.coinglass.com/api/futures'
+API     = 'https://www.coinglass.com/pro/v2/futures'
 
 def get(path, params=None):
-    r = requests.get(API+path, params=params, headers=HEADERS, timeout=15)
+    r = requests.get(API + path, params=params, headers=HEADERS, timeout=15)
     r.raise_for_status()
     return r.json()
 
