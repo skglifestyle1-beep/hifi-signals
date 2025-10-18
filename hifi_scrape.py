@@ -1,4 +1,3 @@
-```python
 #!/usr/bin/env python3
 from playwright.sync_api import sync_playwright
 import pandas as pd, os, requests, datetime as dt
@@ -45,4 +44,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-```
