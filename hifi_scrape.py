@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from playwright.sync_api import sync_playwright
-import pandas as pd, os, requests, datetime as dt, base64
+import pandas as pd, os, requests, datetime as dt
 
 TOKEN   = os.getenv('TELEGRAM_TOKEN')
 CHAT    = os.getenv('TELEGRAM_CHAT')
@@ -16,10 +16,25 @@ def scrape():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(user_agent='Mozilla/5.0')
         page.goto(URL, wait_until='networkidle')
+
+        # 1. full-page screenshot for debugging
+        png = page.screenshot(full_page=True)
+        with open('page.png','wb') as f: f.write(png)
+
+        # 2. brute-force every global name
         for _ in range(40):
-            data = page.evaluate('() => window.__NUXT__?.state?.liquidationMap?.data || null')
+            data = page.evaluate('''() => {
+                const win = window || {};
+                return  win.__NUXT__?.state?.liquidationMap?.data ||
+                        win.liquidationData ||
+                        win.heatmapData ||
+                        win.liquidationMap ||
+                        win.state?.liquidationMap ||
+                        null;
+            }''')
             if data: break
             page.wait_for_timeout(1000)
+
         browser.close()
     return pd.DataFrame(data) if data else pd.DataFrame()
 
@@ -27,7 +42,7 @@ def main():
     try:
         df = scrape()
         if df.empty:
-            send("⚠️ HIFI scrape returned empty")
+            send("⚠️ HIFI scrape returned empty – see artifact page.png")
             return
         price   = df['price'].iloc[-1]
         top_long  = df.loc[df['longUsd'].idxmax()]
@@ -49,4 +64,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
